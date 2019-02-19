@@ -289,6 +289,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         retries = options.get('connection_retries', 5)
         backoff_time = options.get('connection_retry_backoff_time', 5)
         query_timeout = options.get('query_timeout', 0)
+        init_command = options.get('init_command', None)
 
         conn = None
         retry_count = 0
@@ -298,6 +299,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                 conn = Database.connect(connstr,
                                         unicode_results=unicode_results,
                                         timeout=timeout)
+                if init_command is not None:
+                    c = conn.cursor()
+                    c.execute(init_command)
+                    c.close()
+                    conn.commit()
             except Exception as e:
                 for error_number in self._transient_error_numbers:
                     if error_number in e.args[1]:
